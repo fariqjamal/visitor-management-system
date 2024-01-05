@@ -399,12 +399,12 @@ function generateToken(userProfile){
 
 
 //Function to login
-async function login(client, data) {
+async function login(client, data, admins) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
 
   // Find the admin user
-  let match = await adminCollection.findOne({ username: data.username });
+  let match = await adminCollection.findOne({ username: admins });
 
   if (!match) {
     // Find the security user
@@ -413,11 +413,17 @@ async function login(client, data) {
 
   if (match) {
     // Compare the provided password with the stored password
-    const isPasswordMatch = await decryptPassword(data.password, match.password);
+    const isPasswordMatch = await decryptPassword(data.password, match.password, match.admins);
 
     if (isPasswordMatch) {
       console.clear(); // Clear the console
-      const token = generateToken(match);
+      const token = generateToken(match.);
+      console.log(output(match.role));
+      return "\nToken for " + match.name + ": " + token;
+    }
+    else{
+      console.clear(); // Clear the console
+      const token = generateToken(match.admins);
       console.log(output(match.role));
       return "\nToken for " + match.name + ": " + token;
     }
