@@ -99,31 +99,8 @@ async function run() {
  *         description: Internal Server Error
  */
 app.post('/registerAdmin', async (req, res) => {
-  try {
-      const adminDetails = req.body;
-
-      // Hash the password using bcrypt
-      const hashedPassword = await bcrypt.hash(adminDetails.password, saltRounds);
-
-      // Store the admin details in the database
-      const adminCollection = client.db("assigment").collection("Admin");
-      const result = await adminCollection.insertOne({
-          username: adminDetails.username,
-          password: hashedPassword,
-          name: adminDetails.name,
-          email: adminDetails.email,
-          role: 'Admin'
-      });
-
-      if (result.insertedCount > 0) {
-          res.status(200).send('Admin registered successfully');
-      } else {
-          res.status(500).send('Failed to register admin');
-      }
-  } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
-  }
+ let data = req.body;
+ res.send(await registerAdmin(client, data));
 });
 
   /**
