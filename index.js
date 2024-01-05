@@ -57,57 +57,6 @@ async function run() {
     res.send('Welcome to the Security Management System');
   });
 
-   /**
- * @swagger
- * /registerAdmin:
- *   post:
- *     summary: Register a new admin
- *     description: Register a new admin user with required details
- *     tags:
- *       - Admin
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *               name:
- *                 type: string
- *               email:
- *                 type: string
- *                 format: email
- *               phoneNumber:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [Admin]
- *             required:
- *               - username
- *               - password
- *               - name
- *               - email
- *               - phoneNumber
- *               - role
- *     responses:
- *       '200':
- *         description: Admin registration successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '400':
- *         description: Invalid request body
- */
-   app.post('/registerAdmin', async (req, res) => {
-    let data = req.body;
-    res.send(await registerAdmin(client, data));
-  });
-
   /**
  * @swagger
  * /loginAdmin:
@@ -182,42 +131,6 @@ async function run() {
 
   /**
  * @swagger
- * /loginVisitor:
- *   post:
- *     summary: Authenticate visitor
- *     description: Login for visitors
- *     tags:
- *       - Visitor
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       '500':
- *         description: Visitor login successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
- */
-  app.post('/loginVisitor', async (req, res) => {
-    let data = req.body;
-    res.send(await login(client, data));
-  });
-
-  /**
- * @swagger
  * /registerSecurity:
  *   post:
  *     summary: Register a new security personnel
@@ -261,66 +174,6 @@ async function run() {
  *         description: Unauthorized - Token is missing or invalid
  */
   app.post('/registerSecurity', verifyToken, async (req, res) => {
-    let data = req.user;
-    let mydata = req.body;
-    res.send(await register(client, data, mydata));
-  });
-
-  
-  /**
- * @swagger
- * /registerVisitor:
- *   post:
- *     summary: Register a new visitor
- *     description: Register a new visitor with required details
- *     tags:
- *       - Visitor
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *               name:
- *                 type: string
- *               icNumber:
- *                 type: string
- *               company:
- *                 type: string
- *               vehicleNumber:
- *                 type: string
- *               email:
- *                 type: string
- *                 format: email
- *               phoneNumber:
- *                 type: string
- *             required:
- *               - username
- *               - password
- *               - name
- *               - icNumber
- *               - company
- *               - vehicleNumber
- *               - email
- *               - phoneNumber
- *     responses:
- *       '200':
- *         description: Visitor registration successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '401':
- *         description: Unauthorized - Token is missing or invalid
- */
-  app.post('/registerVisitor', verifyToken, async (req, res) => {
     let data = req.user;
     let mydata = req.body;
     res.send(await register(client, data, mydata));
@@ -376,36 +229,8 @@ async function run() {
     let data = req.user;
     res.send(await read(client, data));
   });
-
-  
-  /**
- * @swagger
- * /readVisitor:
- *   get:
- *     summary: Read visitor information
- *     description: Retrieve information for a visitor
- *     tags:
- *       - Visitor
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       '500':
- *         description: Visitor information retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/VisitorInfo'
- *       '401':
- *         description: Unauthorized - Token is missing or invalid
- */
-  app.get('/readVisitor', verifyToken, async (req, res) => {
-    let data = req.user;
-    res.send(await read(client, data));
-  });
-
   
 
- 
   /**
  * @swagger
  * /updateVisitor:
@@ -573,7 +398,7 @@ function generateToken(userProfile){
 }
 
 //Function to register admin
-async function registerAdmin(client, data) {
+/*async function registerAdmin(client, data) {
   data.password = await encryptPassword(data.password);
   
   const existingUser = await client.db("assigment").collection("Admin").findOne({ username: data.username });
@@ -583,7 +408,7 @@ async function registerAdmin(client, data) {
     const result = await client.db("assigment").collection("Admin").insertOne(data);
     return 'Admin registered';
   }
-}
+}*/
 
 
 //Function to login
@@ -593,7 +418,7 @@ async function login(client, data) {
   const usersCollection = client.db("assigment").collection("Users");
 
   // Find the admin user
-  let match = await adminCollection.findOne({ username: data.username });
+  let match = await adminCollection.findOne({ username: admin });
 
   if (!match) {
     // Find the security user
