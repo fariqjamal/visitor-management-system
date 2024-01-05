@@ -387,7 +387,58 @@ async function run() {
   });
 }
 
+/**
+ * @swagger
+ * /issueVisitorPass:
+ *   post:
+ *     summary: Issue a visitor pass
+ *     description: Issue a visitor pass for a visitor without creating a visitor account
+ *     tags:
+ *       - Security
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               icNumber:
+ *                 type: string
+ *               vehicleNumber:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               company:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Visitor pass issued successfully
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '401':
+ *         description: Unauthorized - Token is missing or invalid
+ */
+app.post('/issueVisitorPass', verifyToken, async (req, res) => {
+  const data = req.user;
+  const visitorData = req.body;
+
 run().catch(console.error);
+
+try {
+  // Store the visitor record in the database
+  const result = await storeVisitorRecord(client, data, visitorData);
+  res.status(200).send(result);
+} catch (error) {
+  console.error(error);
+  res.status(500).send('Internal Server Error');
+}
+});
 
 //To generate token
 function generateToken(userProfile){
@@ -399,12 +450,12 @@ function generateToken(userProfile){
 
 
 //Function to login
-async function login(client, data, admins) {
+async function login(client, data) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
 
   // Find the admin user
-  let match = await adminCollection.findOne({ username: admins });
+  let match = await adminCollection.findOne({ username: data.username });
 
   if (!match) {
     // Find the security user
@@ -413,17 +464,11 @@ async function login(client, data, admins) {
 
   if (match) {
     // Compare the provided password with the stored password
-    const isPasswordMatch = await decryptPassword(data.password, match.password, match.admins);
+    const isPasswordMatch = await decryptPassword(data.password, match.password);
 
     if (isPasswordMatch) {
       console.clear(); // Clear the console
-      const token = generateToken(match.);
-      console.log(output(match.role));
-      return "\nToken for " + match.name + ": " + token;
-    }
-    else{
-      console.clear(); // Clear the console
-      const token = generateToken(match.admins);
+      const token = generateToken(match);
       console.log(output(match.role));
       return "\nToken for " + match.name + ": " + token;
     }
@@ -451,7 +496,7 @@ async function decryptPassword(password, compare) {
 }
 
 
-//Function to register security and visitor
+//Function to register security
 async function register(client, data, mydata) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
@@ -491,7 +536,26 @@ async function register(client, data, mydata) {
   }
 }
 
+// Function to store visitor record
+async function storeVisitorRecord(client, securityData, visitorData) {
+  const visitorsCollection = client.db('assigment').collection('Visitors');
 
+  // Create a visitor record object
+  const visitorRecord = {
+    name: visitorData.name,
+    icNumber: visitorData.icNumber,
+    vehicleNumber: visitorData.vehicleNumber,
+    phoneNumber: visitorData.phoneNumber,
+    company: visitorData.company,
+    issuedBy: securityData.username, // Security personnel who issued the pass
+    issueDate: new Date()
+  };
+
+  // Insert the visitor record into the Visitors collection
+  await visitorsCollection.insertOne(visitorRecord);
+
+  return 'Visitor pass issued successfully';
+}
 
 
 
