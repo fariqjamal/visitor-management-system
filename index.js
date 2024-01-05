@@ -238,7 +238,7 @@ async function run() {
  *     summary: Update visitor information
  *     description: Update information for a visitor
  *     tags:
- *       - Visitor
+ *       - Security
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -296,7 +296,7 @@ async function run() {
  *     summary: Delete visitor account
  *     description: Delete a visitor's account
  *     tags:
- *       - Visitor
+ *       - Security
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -323,7 +323,7 @@ async function run() {
  *     summary: Check-in for a visitor
  *     description: Perform check-in for a visitor with record ID and purpose
  *     tags:
- *       - Visitor
+ *       - Security
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -368,7 +368,7 @@ async function run() {
  *     summary: Perform check-out for a visitor
  *     description: Update check-out time for a visitor
  *     tags:
- *       - Visitor
+ *       - Security
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -397,37 +397,18 @@ function generateToken(userProfile){
   { expiresIn: '2h' });  //expires after 2 hour
 }
 
-//Function to register admin
-/*async function registerAdmin(client, data) {
-  data.password = await encryptPassword(data.password);
-  
-  const existingUser = await client.db("assigment").collection("Admin").findOne({ username: data.username });
-  if (existingUser) {
-    return 'Username already registered';
-  } else {
-    const result = await client.db("assigment").collection("Admin").insertOne(data);
-    return 'Admin registered';
-  }
-}*/
-
 
 //Function to login
 async function login(client, data) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
-  const usersCollection = client.db("assigment").collection("Users");
 
   // Find the admin user
-  let match = await adminCollection.findOne({ username: admin });
+  let match = await adminCollection.findOne({ username: data.username });
 
   if (!match) {
     // Find the security user
     match = await securityCollection.findOne({ username: data.username });
-  }
-
-  if (!match) {
-    // Find the regular user
-    match = await usersCollection.findOne({ username: data.username });
   }
 
   if (match) {
@@ -468,11 +449,9 @@ async function decryptPassword(password, compare) {
 async function register(client, data, mydata) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
-  const usersCollection = client.db("assigment").collection("Users");
 
   const tempAdmin = await adminCollection.findOne({ username: mydata.username });
   const tempSecurity = await securityCollection.findOne({ username: mydata.username });
-  const tempUser = await usersCollection.findOne({ username: mydata.username });
 
   if (tempAdmin || tempSecurity || tempUser) {
     return "Username already in use, please enter another username";
@@ -494,13 +473,8 @@ async function register(client, data, mydata) {
 
   if (data.role === "Security") {
     const result = await usersCollection.insertOne({
-      username: mydata.username,
-      password: await encryptPassword(mydata.password),
       name: mydata.name,
       email: mydata.email,
-      
-      Security: data.username,
-      company: mydata.company,
       vehicleNumber: mydata.vehicleNumber,
       icNumber: mydata.icNumber,
       phoneNumber: mydata.phoneNumber,
@@ -508,12 +482,6 @@ async function register(client, data, mydata) {
       records: [],
     });
 
-    const updateResult = await securityCollection.updateOne(
-      { username: data.username },
-      { $push: { visitors: mydata.username } }
-    );
-
-    return "Visitor registered successfully";
   }
 }
 
@@ -526,10 +494,9 @@ async function read(client, data) {
   if (data.role == 'Admin') {
     const Admins = await client.db('assigment').collection('Admin').find({ role: 'Admin' }).next();
     const Securitys = await client.db('assigment').collection('Security').find({ role: 'Security' }).toArray();
-    const Visitors = await client.db('assigment').collection('Users').find({ role: 'Visitor' }).toArray();
     const Records = await client.db('assigment').collection('Records').find().toArray();
 
-    return { Admins, Securitys, Visitors, Records };
+    return { Admins, Securitys, Records };
   }
 
   if (data.role == 'Security' ) {
@@ -543,38 +510,6 @@ async function read(client, data) {
 
     return { Security, Visitors, Records };
   }
-
-  if (data.role == 'Visitor') {
-    const Visitor = await client.db('assigment').collection('Users').findOne({ username: data.username });
-    if (!Visitor) {
-      return 'User not found';
-    }
-
-    const Records = await client.db('assigment').collection('Records').find({ recordID: { $in: Visitor.records } }).toArray();
-
-    return { Visitor, Records };
-  }
-}
-
-
-//Function to update data
-async function update(client, data, mydata) {
-  const usersCollection = client.db("assigment").collection("Users");
-
-  if (mydata.password) {
-    mydata.password = await encryptPassword(mydata.password);
-  }
-
-  const result = await usersCollection.updateOne(
-    { username: data.username },
-    { $set: mydata }
-  );
-
-  if (result.matchedCount === 0) {
-    return "User not found";
-  }
-
-  return "Update Successfully";
 }
 
 
@@ -625,8 +560,8 @@ async function checkIn(client, data, mydata) {
     return 'Already checked in, please check out first!!!';
   }
 
-  if (data.role !== 'Visitor') {
-    return 'Only visitors can access check-in.';
+  if (data.role !== 'Security') {
+    return 'Only security can access check-in.';
   }
 
   const existingRecord = await recordsCollection.findOne({ recordID: mydata.recordID });
