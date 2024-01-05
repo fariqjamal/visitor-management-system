@@ -59,6 +59,75 @@ async function run() {
 
   /**
  * @swagger
+ * /registerAdmin:
+ *   post:
+ *     summary: Register a new admin
+ *     description: Register a new admin with required details
+ *     tags:
+ *       - Admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *             required:
+ *               - username
+ *               - password
+ *               - name
+ *               - email
+ *     responses:
+ *       '200':
+ *         description: Admin registration successful
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *       '500':
+ *         description: Internal Server Error
+ */
+app.post('/registerAdmin', async (req, res) => {
+  try {
+      const adminDetails = req.body;
+
+      // Hash the password using bcrypt
+      const hashedPassword = await bcrypt.hash(adminDetails.password, saltRounds);
+
+      // Store the admin details in the database
+      const adminCollection = client.db("assigment").collection("Admin");
+      const result = await adminCollection.insertOne({
+          username: adminDetails.username,
+          password: hashedPassword,
+          name: adminDetails.name,
+          email: adminDetails.email,
+          role: 'Admin'
+      });
+
+      if (result.insertedCount > 0) {
+          res.status(200).send('Admin registered successfully');
+      } else {
+          res.status(500).send('Failed to register admin');
+      }
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
+  /**
+ * @swagger
  * /loginAdmin:
  *   post:
  *     summary: Authenticate admin
