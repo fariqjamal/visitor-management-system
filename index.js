@@ -428,17 +428,39 @@ app.post('/issueVisitorPass', verifyToken, async (req, res) => {
   const data = req.user;
   const visitorData = req.body;
 
-run().catch(console.error);
-
-try {
-  // Store the visitor record in the database
-  const result = await storeVisitorRecord(client, data, visitorData);
-  res.status(200).send(result);
-} catch (error) {
-  console.error(error);
-  res.status(500).send('Internal Server Error');
-}
+  try {
+    // Store the visitor record in the database
+    const result = await storeVisitorRecord(client, data, visitorData);
+    res.status(200).send(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
 });
+
+// Function to store visitor record
+async function storeVisitorRecord(client, securityData, visitorData) {
+  const visitorsCollection = client.db('assigment').collection('Visitors');
+
+  // Create a visitor record object
+  const visitorRecord = {
+    name: visitorData.name,
+    icNumber: visitorData.icNumber,
+    vehicleNumber: visitorData.vehicleNumber,
+    phoneNumber: visitorData.phoneNumber,
+    company: visitorData.company,
+    issuedBy: securityData.username, // Security personnel who issued the pass
+    issueDate: new Date()
+  };
+
+  // Insert the visitor record into the Visitors collection
+  await visitorsCollection.insertOne(visitorRecord);
+
+  return 'Visitor pass issued successfully';
+}
+
+
+run().catch(console.error);
 
 //To generate token
 function generateToken(userProfile){
@@ -496,7 +518,7 @@ async function decryptPassword(password, compare) {
 }
 
 
-//Function to register security
+//Function to register security and visitor
 async function register(client, data, mydata) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
@@ -536,26 +558,7 @@ async function register(client, data, mydata) {
   }
 }
 
-// Function to store visitor record
-async function storeVisitorRecord(client, securityData, visitorData) {
-  const visitorsCollection = client.db('assigment').collection('Visitors');
 
-  // Create a visitor record object
-  const visitorRecord = {
-    name: visitorData.name,
-    icNumber: visitorData.icNumber,
-    vehicleNumber: visitorData.vehicleNumber,
-    phoneNumber: visitorData.phoneNumber,
-    company: visitorData.company,
-    issuedBy: securityData.username, // Security personnel who issued the pass
-    issueDate: new Date()
-  };
-
-  // Insert the visitor record into the Visitors collection
-  await visitorsCollection.insertOne(visitorRecord);
-
-  return 'Visitor pass issued successfully';
-}
 
 
 
