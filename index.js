@@ -655,11 +655,11 @@ async function register(client, data, mydata) {
 
   if (data.role === "Admin") {
     const result = await securityCollection.insertOne({
-      username: admin,
-      password: await encryptPassword(fariqimran),
-      name: fariq,
-      email: fariq8@gmail.com,
-      phoneNumber: 12345,
+      username: mydata.username,
+      password: await encryptPassword(mydata.password),
+      name: mydata.name,
+      email: mydata.email,
+      phoneNumber: mydata.phoneNumber,
       role: "Security",
       visitors: [],
     });
