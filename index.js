@@ -655,26 +655,26 @@ async function read(client, data) {
 
 //Function to delete data
 async function deleteUser(client, data) {
-  const usersCollection = client.db("assigment").collection("Users");
+  const visitorsCollection = client.db("assigment").collection("Visitors");
   const recordsCollection = client.db("assigment").collection("Records");
   const securityCollection = client.db("assigment").collection("Security");
 
   // Delete user document
-  const deleteResult = await usersCollection.deleteOne({ username: data.username });
+  const deleteResult = await visitorsCollection.deleteOne({ name: data.name });
   if (deleteResult.deletedCount === 0) {
     return "User not found";
   }
 
   // Update visitors array in other users' documents
-  await usersCollection.updateMany(
-    { visitors: data.username },
-    { $pull: { visitors: data.username } }
+  await visitorsCollection.updateMany(
+    { visitors: data.name },
+    { $pull: { visitors: data.name } }
   );
 
   // Update visitors array in the Security collection
   await securityCollection.updateMany(
-    { visitors: data.username },
-    { $pull: { visitors: data.username } }
+    { visitors: data.name },
+    { $pull: { visitors: data.name } }
   );
 
   return "Delete Successful\nBut the records are still in the database";
