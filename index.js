@@ -484,7 +484,7 @@ async function run() {
 // Function to store visitor record
 async function storeVisitorRecord(client, data, mydata) {
   const visitorsCollection = client.db('assigment').collection('Visitors');
-
+  const recordsCollection = client.db('assigment').collection('Records');
   try {
     // Create a visitor record object
     const visitorRecord = {
@@ -510,7 +510,9 @@ async function storeVisitorRecord(client, data, mydata) {
     }
 
     throw new Error('Failed to issue visitor pass. Please try again.');
+  
   }
+  
 }
 
 
