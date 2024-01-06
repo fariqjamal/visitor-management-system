@@ -309,9 +309,9 @@ async function run() {
  * /issueVisitorPass:
  *   post:
  *     summary: Issue a visitor pass
- *     description: Issue a visitor pass for a visitor without creating a visitor account
+ *     description: Issue a visitor pass for a specific visitor
  *     tags:
- *       - Security
+ *       - Host
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -325,9 +325,18 @@ async function run() {
  *                 type: string
  *               icNumber:
  *                 type: string
- *               recordID:
+ *               passIdentifier:
  *                 type: string
- *               purpose:
+ *               hostNumber:
+ *                 type: string
+ *               hostUsername:
+ *                 type: string
+ *               checkInTime:
+ *                 type: string
+ *                 format: date-time
+ *               checkOutTime:
+ *                 type: string
+ *                 format: date-time
  *     responses:
  *       '200':
  *         description: Visitor pass issued successfully
@@ -339,73 +348,34 @@ async function run() {
  *         description: Unauthorized - Token is missing or invalid
  */
  app.post('/issueVisitorPass', verifyToken, async (req, res) => {
-   let data = req.user;
-   let mydata = req.body;
-   res.send(await storeVisitorRecord(client, data, mydata));
+    try {
+     const visitorDetails = req.body;
+
+     // Create a record for the visitor
+      const record = {
+      name: visitorDetails.name,
+      icNumber: visitorDetails.icNumber,
+      passIdentifier: visitorDetails.passIdentifier,
+      hostNumber: visitorDetails.hostNumber,
+      hostUsername: visitorDetails.hostUsername,
+      checkInTime: new Date(visitorDetails.checkInTime),
+      checkOutTime: new Date(visitorDetails.checkOutTime),
+    };
+
+    // Insert the record into the Records collection
+    const result = await recordsCollection.insertOne(record);
+
+    if (result.insertedCount > 0) {
+      res.status(200).send('Visitor pass issued successfully');
+    } else {
+      res.status(500).send('Failed to issue visitor pass');
+    }
+    } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+    }
   });
 }
-
-
-
-async function storeVisitorRecord(client, data, mydata) {
-  const recordsCollection = client.db('assigment').collection('Records');
-
-  // Create a new visitor document for the Records collection
-  const newVisitor = {
-    name: data.name,
-    icNumber: mydata.icNumber,
-    passIdentifier: mydata.passIdentifier,
-    hostNumber: mydata.hostNumber,
-    hostUsername: mydata.hostUsername,
-    currentCheckIn: mydata.recordID,  // Assuming recordID is the check-in identifier
-    records: [mydata.recordID],       // Assuming recordID is added to records array
-    role: 'Visitor'                   // Setting role to Visitor as per your previous context
-  };
-
-  // Insert the new visitor document into the Records collection
-  await recordsCollection.insertOne(newVisitor);
-
-  // Insert a new record into the Records collection for the check-in details
-  const currentCheckInTime = new Date();
-
-  const recordData = {
-    name: data.name,
-    recordID: mydata.recordID,
-    purpose: mydata.purpose,
-    checkInTime: currentCheckInTime
-  };
-
-  await recordsCollection.insertOne(recordData);
-
-  return `Visitor ${data.name} has checked in at '${currentCheckInTime}' with recordID '${mydata.recordID}'`;
-}
-
-// Example usage:
-// Assuming you have a MongoDB client initialized and connected
-// const client = new MongoClient(uri);
-// await client.connect();
-
-// const data = {
-//   name: 'John Doe'
-// };
-// const mydata = {
-//   icNumber: '1234567890',
-//   passIdentifier: 'PASS123',
-//   hostNumber: '9876543210',
-//   hostUsername: 'security1',
-//   recordID: '1',
-//   purpose: 'Meeting'
-// };
-
-// storeVisitorRecord(client, data, mydata).then(result => {
-//   console.log(result);
-// }).catch(error => {
-//   console.error('Error storing visitor record:', error);
-// }).finally(() => {
-//   client.close();
-// });
-
-
 
 run().catch(console.error);
 
@@ -606,6 +576,4 @@ function verifyToken(req, res, next) {
     next();
   });
 }
-
-
 
