@@ -434,9 +434,8 @@ async function run() {
     let data = req.user;
     res.send(await checkOut(client, data));
   });
-}
 
-/**
+  /**
  * @swagger
  * /issueVisitorPass:
  *   post:
@@ -473,19 +472,13 @@ async function run() {
  *       '401':
  *         description: Unauthorized - Token is missing or invalid
  */
-app.post('/issueVisitorPass', verifyToken, async (req, res) => {
-  const data = req.user;
-  const visitorData = req.body;
+ app.post('/issueVisitorPass', verifyToken, async (req, res) => {
+   let data = req.user;
+   res.send(await )storeVisitorRecord(client, securityData, visitorData)
+  });
+}
 
-  try {
-    // Store the visitor record in the database
-    const result = await storeVisitorRecord(client, data, visitorData);
-    res.status(200).send(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+
 
 // Function to store visitor record
 async function storeVisitorRecord(client, securityData, visitorData) {
