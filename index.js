@@ -522,13 +522,12 @@ function generateToken(userProfile){
 //Function to register admin
 async function registerAdmin(client, data) {
   data.password = await encryptPassword(data.password);
-
-  const existingUser = await client.db("assignment").collection("Admin").findone({username: data.username});
+ 
+  const existingUser = await client.db("assigment").collection("Admin").findone({username: data.username});
   if (existingUser) {
     return 'Username already registered';
-  }
-  else{
-    const result = await client.db("assignment").collection("Admin").insertOne(data);
+  }else{
+    const result = await client.db("assigment").collection("Admin").insertOne(data);
     return 'Admin registered';
   }
 }
