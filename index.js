@@ -474,7 +474,7 @@ async function run() {
  */
  app.post('/issueVisitorPass', verifyToken, async (req, res) => {
    let data = req.user;
-   res.send(await )storeVisitorRecord(client, securityData, visitorData)
+   res.send(await storeVisitorRecord(client, securityData, visitorData));
   });
 }
 
