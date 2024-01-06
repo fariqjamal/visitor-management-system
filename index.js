@@ -347,31 +347,25 @@ async function run() {
 
 
 
-// Function to store visitor record
 async function storeVisitorRecord(client, data, mydata) {
-  const visitorsCollection = client.db('assigment').collection('Visitors');
   const recordsCollection = client.db('assigment').collection('Records');
 
-  const currentUser = await visitorsCollection.findOne({ name: data.name });
+  // Create a new visitor document for the Records collection
+  const newVisitor = {
+    name: data.name,
+    icNumber: mydata.icNumber,
+    passIdentifier: mydata.passIdentifier,
+    hostNumber: mydata.hostNumber,
+    hostUsername: mydata.hostUsername,
+    currentCheckIn: mydata.recordID,  // Assuming recordID is the check-in identifier
+    records: [mydata.recordID],       // Assuming recordID is added to records array
+    role: 'Visitor'                   // Setting role to Visitor as per your previous context
+  };
 
-  if (!currentUser) {
-    return 'Visitors not found';
-  }
+  // Insert the new visitor document into the Records collection
+  await recordsCollection.insertOne(newVisitor);
 
-  if (currentUser.currentCheckIn) {
-    return 'Already checked in, please check out first!!!';
-  }
-
-  if (data.role !== 'Security') {
-    return 'Only security can access check-in.';
-  }
-
-  const existingRecord = await recordsCollection.findOne({ recordID: mydata.recordID });
-
-  if (existingRecord) {
-    return `The recordID '${mydata.recordID}' is already in use. Please enter another recordID.`;
-  }
-
+  // Insert a new record into the Records collection for the check-in details
   const currentCheckInTime = new Date();
 
   const recordData = {
@@ -383,17 +377,33 @@ async function storeVisitorRecord(client, data, mydata) {
 
   await recordsCollection.insertOne(recordData);
 
-  await visitorsCollection.updateOne(
-    { name: data.name },
-    {
-      $set: { currentCheckIn: mydata.recordID },
-      $push: { records: mydata.recordID }
-    }
-  );
-
-  return `You have checked in at '${currentCheckInTime}' with recordID '${mydata.recordID}'`;
+  return `Visitor ${data.name} has checked in at '${currentCheckInTime}' with recordID '${mydata.recordID}'`;
 }
-  
+
+// Example usage:
+// Assuming you have a MongoDB client initialized and connected
+// const client = new MongoClient(uri);
+// await client.connect();
+
+// const data = {
+//   name: 'John Doe'
+// };
+// const mydata = {
+//   icNumber: '1234567890',
+//   passIdentifier: 'PASS123',
+//   hostNumber: '9876543210',
+//   hostUsername: 'security1',
+//   recordID: '1',
+//   purpose: 'Meeting'
+// };
+
+// storeVisitorRecord(client, data, mydata).then(result => {
+//   console.log(result);
+// }).catch(error => {
+//   console.error('Error storing visitor record:', error);
+// }).finally(() => {
+//   client.close();
+// });
 
 
 
