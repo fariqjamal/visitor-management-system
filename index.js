@@ -491,22 +491,34 @@ app.post('/issueVisitorPass', verifyToken, async (req, res) => {
 async function storeVisitorRecord(client, securityData, visitorData) {
   const visitorsCollection = client.db('assigment').collection('Visitors');
 
-  // Create a visitor record object
-  const visitorRecord = {
-    name: visitorData.name,
-    icNumber: visitorData.icNumber,
-    vehicleNumber: visitorData.vehicleNumber,
-    phoneNumber: visitorData.phoneNumber,
-    company: visitorData.company,
-    issuedBy: securityData.username, // Security personnel who issued the pass
-    issueDate: new Date()
-  };
+  try {
+    // Create a visitor record object
+    const visitorRecord = {
+      name: visitorData.name,
+      icNumber: visitorData.icNumber,
+      vehicleNumber: visitorData.vehicleNumber,
+      phoneNumber: visitorData.phoneNumber,
+      company: visitorData.company,
+      issuedBy: securityData.username, // Security personnel who issued the pass
+      issueDate: new Date()
+    };
 
-  // Insert the visitor record into the Visitors collection
-  await visitorsCollection.insertOne(visitorRecord);
+    // Insert the visitor record into the Visitors collection
+    await visitorsCollection.insertOne(visitorRecord);
 
-  return 'Visitor pass issued successfully';
+    return 'Visitor pass issued successfully';
+  } catch (error) {
+    console.error('Error storing visitor record:', error);
+
+    // Handle specific MongoDB errors
+    if (error.code === 11000) { // Duplicate key error
+      throw new Error('Duplicate visitor record. Please check the input data.');
+    }
+
+    throw new Error('Failed to issue visitor pass. Please try again.');
+  }
 }
+
 
 
 run().catch(console.error);
