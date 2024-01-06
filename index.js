@@ -474,25 +474,26 @@ async function run() {
  */
  app.post('/issueVisitorPass', verifyToken, async (req, res) => {
    let data = req.user;
-   res.send(await storeVisitorRecord(client, securityData, visitorData));
+   let mydata = req.body;
+   res.send(await storeVisitorRecord(client, data, mydata));
   });
 }
 
 
 
 // Function to store visitor record
-async function storeVisitorRecord(client, securityData, visitorData) {
+async function storeVisitorRecord(client, data, mydata) {
   const visitorsCollection = client.db('assigment').collection('Visitors');
 
   try {
     // Create a visitor record object
     const visitorRecord = {
-      name: visitorData.name,
-      icNumber: visitorData.icNumber,
-      vehicleNumber: visitorData.vehicleNumber,
-      phoneNumber: visitorData.phoneNumber,
-      company: visitorData.company,
-      issuedBy: securityData.username, // Security personnel who issued the pass
+      name: data.name,
+      icNumber: data.icNumber,
+      vehicleNumber: data.vehicleNumber,
+      phoneNumber: data.phoneNumber,
+      company: data.company,
+      issuedBy: mydata.username, // Security personnel who issued the pass
       issueDate: new Date()
     };
 
