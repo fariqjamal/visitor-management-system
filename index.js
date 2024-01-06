@@ -65,6 +65,8 @@ async function run() {
  *     description: Register a new admin with required details
  *     tags:
  *       - Admin
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -81,11 +83,14 @@ async function run() {
  *               email:
  *                 type: string
  *                 format: email
+ *               phoneNumber:
+ *                 type: string
  *             required:
  *               - username
  *               - password
  *               - name
  *               - email
+ *               - phoneNumber
  *     responses:
  *       '200':
  *         description: Admin registration successful
@@ -93,15 +98,13 @@ async function run() {
  *           text/plain:
  *             schema:
  *               type: string
- *       '400':
- *         description: Invalid request body
- *       '500':
- *         description: Internal Server Error
+ *       '401':
+ *         description: Unauthorized - Token is missing or invalid
  */
-app.post('/registerAdmin', async (req, res) => {
- let data = req.body;
- res.send(await registerAdmin(client, data));
-});
+ app.post('/registerAdmin', async (req, res) => {
+  let data = req.body;
+  res.send(await registerAdmin(client, data));
+ });
 
   /**
  * @swagger
