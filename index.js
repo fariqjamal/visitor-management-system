@@ -485,34 +485,47 @@ async function run() {
 async function storeVisitorRecord(client, data, mydata) {
   const visitorsCollection = client.db('assigment').collection('Visitors');
   const recordsCollection = client.db('assigment').collection('Records');
-  try {
-    // Create a visitor record object
-    const visitorRecord = {
-      name: data.name,
-      icNumber: data.icNumber,
-      vehicleNumber: data.vehicleNumber,
-      phoneNumber: data.phoneNumber,
-      company: data.company,
-      issuedBy: mydata.username, // Security personnel who issued the pass
-      issueDate: new Date()
-    };
 
-    // Insert the visitor record into the Visitors collection
-    await visitorsCollection.insertOne(visitorRecord);
+  const currentUser = await visitorsCollection.findOne({ name: data.name });
 
-    return 'Visitor pass issued successfully';
-  } catch (error) {
-    console.error('Error storing visitor record:', error);
-
-    // Handle specific MongoDB errors
-    if (error.code === 11000) { // Duplicate key error
-      throw new Error('Duplicate visitor record. Please check the input data.');
-    }
-
-    throw new Error('Failed to issue visitor pass. Please try again.');
-  
+  if (!currentUser) {
+    return 'Visitors not found';
   }
-  
+
+  if (currentUser.currentCheckIn) {
+    return 'Already checked in, please check out first!!!';
+  }
+
+  if (data.role !== 'Security') {
+    return 'Only security can access check-in.';
+  }
+
+  const existingRecord = await recordsCollection.findOne({ recordID: mydata.recordID });
+
+  if (existingRecord) {
+    return `The recordID '${mydata.recordID}' is already in use. Please enter another recordID.`;
+  }
+
+  const currentCheckInTime = new Date();
+
+  const recordData = {
+    name: data.name,
+    recordID: mydata.recordID,
+    purpose: mydata.purpose,
+    checkInTime: currentCheckInTime
+  };
+
+  await recordsCollection.insertOne(recordData);
+
+  await visitorsCollection.updateOne(
+    { name: data.name },
+    {
+      $set: { currentCheckIn: mydata.recordID },
+      $push: { records: mydata.recordID }
+    }
+  );
+
+  return `You have checked in at '${currentCheckInTime}' with recordID '${mydata.recordID}'`;
 }
 
 
