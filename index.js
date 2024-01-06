@@ -141,43 +141,7 @@ async function run() {
     let data = req.body;
     res.send(await login(client, data));
   });
-
-  /**
- * @swagger
- * /loginSecurity:
- *   post:
- *     summary: Authenticate security personnel
- *     description: Login with security personnel credentials
- *     tags:
- *       - Security
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       '500':
- *         description: Security personnel login successful
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Invalid credentials
- */
-  app.post('/loginSecurity', async (req, res) => {
-    let data = req.body;
-    res.send(await login(client, data));
-  });
-
+  
   /**
  * @swagger
  * /registerSecurity:
@@ -227,6 +191,44 @@ async function run() {
     let mydata = req.body;
     res.send(await register(client, data, mydata));
   });
+  
+  /**
+ * @swagger
+ * /loginSecurity:
+ *   post:
+ *     summary: Authenticate security personnel
+ *     description: Login with security personnel credentials
+ *     tags:
+ *       - Security
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '500':
+ *         description: Security personnel login successful
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
+ */
+  app.post('/loginSecurity', async (req, res) => {
+    let data = req.body;
+    res.send(await login(client, data));
+  });
+
+  
 
   /**
  * @swagger
@@ -281,17 +283,39 @@ async function run() {
 
   /**
  * @swagger
- * /deleteVisitor:
- *   delete:
- *     summary: Delete visitor account
- *     description: Delete a visitor's account
+ * /registerHost:
+ *   post:
+ *     summary: Register a new host
+ *     description: Register a new host with required details
  *     tags:
- *       - Security
+ *       - Host
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phoneNumber:
+ *                 type: string
+ *                 format: phone-number
+ *             required:
+ *               - username
+ *               - password
+ *               - email
+ *               - phoneNumber
  *     responses:
  *       '200':
- *         description: Visitor account deleted successfully
+ *         description: Host registration successful
  *         content:
  *           text/plain:
  *             schema:
@@ -299,9 +323,50 @@ async function run() {
  *       '401':
  *         description: Unauthorized - Token is missing or invalid
  */
-  app.delete('/deleteVisitor', verifyToken, async (req, res) => {
+  app.post('/registerHost', verifyToken, async (req, res) => {
     let data = req.user;
-    res.send(await deleteUser(client, data));
+    let mydata = req.body;
+    res.send(await register(client, data, mydata));
+  });
+
+  /**
+ * @swagger
+ * /loginHost:
+ *   post:
+ *     summary: Authenticate host
+ *     description: Login with host credentials
+ *     tags:
+ *       - Host
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *                 format: phone-number
+ *             required:
+ *               - username
+ *               - phoneNumber
+ *     responses:
+ *       '200':
+ *         description: Host login successful
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Invalid credentials
+ */
+  app.post('/loginHost', async (req, res) => {
+    let data = req.body;
+    res.send(await login(client,data));
   });
 
   /**
@@ -404,13 +469,18 @@ async function registerAdmin(client, data) {
 async function login(client, data) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
-
+  const hostCollection = client.db("assigment").collection("Host");
   // Find the admin user
   let match = await adminCollection.findOne({ username: data.username });
 
   if (!match) {
     // Find the security user
     match = await securityCollection.findOne({ username: data.username });
+  }
+
+  if (!match) {
+    // Find the host
+    match = await hostCollection.findOne({ username: data.username });
   }
 
   if (match) {
@@ -451,11 +521,13 @@ async function decryptPassword(password, compare) {
 async function register(client, data, mydata) {
   const adminCollection = client.db("assigment").collection("Admin");
   const securityCollection = client.db("assigment").collection("Security");
+  const hostCollection = client.db("assigment").collection("Host");
 
   const tempAdmin = await adminCollection.findOne({ username: mydata.username });
   const tempSecurity = await securityCollection.findOne({ username: mydata.username });
+  const tempHost = await hostCollection.findOne({ username: mydata.username });
 
-  if (tempAdmin || tempSecurity || tempUser) {
+  if (tempAdmin || tempSecurity || tempHost) {
     return "Username already in use, please enter another username";
   }
 
@@ -475,30 +547,34 @@ async function register(client, data, mydata) {
 
   if (data.role === "Security") {
     const result = await usersCollection.insertOne({
+      username: mydata.username,
+      password: await encryptPassword(mydata.password),
       name: mydata.name,
       email: mydata.email,
-      vehicleNumber: mydata.vehicleNumber,
-      icNumber: mydata.icNumber,
       phoneNumber: mydata.phoneNumber,
-      role: "Visitor",
+      role: "Host",
       records: [],
     });
 
+    const updateResult = await securityCollection.updateOne(
+      {username: data.username },
+      { $push: { host: mydata.username }}
+    );
+
+    return "Host registered successfully";
+
   }
 }
-
-
-
-
 
 //Function to read data
 async function read(client, data) {
   if (data.role == 'Admin') {
     const Admins = await client.db('assigment').collection('Admin').find({ role: 'Admin' }).next();
     const Securitys = await client.db('assigment').collection('Security').find({ role: 'Security' }).toArray();
+    const Hosts = await client.db('assigment').collection('Host').find({ role: 'Host' }).toArray();
     const Records = await client.db('assigment').collection('Records').find().toArray();
 
-    return { Admins, Securitys, Records };
+    return { Admins, Securitys, Hosts, Records };
   }
 
   if (data.role == 'Security' ) {
@@ -507,40 +583,27 @@ async function read(client, data) {
       return 'User not found';
     }
 
-    const Visitors = await client.db('assigment').collection('Users').find({ Security: data.username }).toArray();
+    const Hosts = await client.db('assigment').collection('Users').find({ Security: data.username }).toArray();
     const Records = await client.db('assigment').collection('Records').find().toArray();
 
-    return { Security, Visitors, Records };
+    return { Security, Hosts, Records };
   }
+
+  if (data.role =='Hosts') {
+    const Hosts = await client.db('assigment').collection('Hosts').findone({ username: data.username });
+    if (!Hosts) {
+      return 'Hosts not found';
+    }
+  }
+
+  const Records = await client.db('assigment').collection('Records').find({ recordID: { $in: Hosts.records } }).toArray();
+
+  return { Hosts, Records };
+
 }
 
 
-//Function to delete data
-async function deleteUser(client, data) {
-  const visitorsCollection = client.db("assigment").collection("Visitors");
-  const recordsCollection = client.db("assigment").collection("Records");
-  const securityCollection = client.db("assigment").collection("Security");
 
-  // Delete user document
-  const deleteResult = await visitorsCollection.deleteOne({ name: data.name });
-  if (deleteResult.deletedCount === 0) {
-    return "User not found";
-  }
-
-  // Update visitors array in other users' documents
-  await visitorsCollection.updateMany(
-    { visitors: data.name },
-    { $pull: { visitors: data.name } }
-  );
-
-  // Update visitors array in the Security collection
-  await securityCollection.updateMany(
-    { visitors: data.name },
-    { $pull: { visitors: data.name } }
-  );
-
-  return "Delete Successful\nBut the records are still in the database";
-}
 
 
 //Function to output
