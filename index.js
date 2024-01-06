@@ -452,6 +452,10 @@ async function run() {
  *           schema:
  *             type: object
  *             properties:
+ *                  name:
+ *                 type: string
+ *               icNumber:
+ *                 type: string
  *               recordID:
  *                 oneOf:
  *                   - type: string
@@ -459,6 +463,8 @@ async function run() {
  *               purpose:
  *                 type: string
  *             required:
+ *               -name
+ *               -icNumber
  *               - recordID
  *               - purpose
  *     responses:
