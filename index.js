@@ -438,9 +438,9 @@ async function run() {
   /**
  * @swagger
  * /issueVisitorPass:
-*   post:
- *     summary: Check-in for a visitor
- *     description: Perform check-in for a visitor with record ID and purpose
+ *   post:
+ *     summary: Issue a visitor pass
+ *     description: Issue a visitor pass for a visitor without creating a visitor account
  *     tags:
  *       - Security
  *     security:
@@ -463,21 +463,18 @@ async function run() {
  *               purpose:
  *                 type: string
  *             required:
- *               -name
- *               -icNumber
+ *               - name
+ *               - icNumber
  *               - recordID
  *               - purpose
  *     responses:
  *       '200':
- *         description: Check-in successful
+ *         description:Visitor pass issued successfully
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
-*       '400':
- *         description: Invalid request body
- *       '401':
- *         description: Unauthorized - Token is missing or invalid
+*      Visitor pass issued successfully
  */
  app.post('/issueVisitorPass', verifyToken, async (req, res) => {
    let data = req.user;
