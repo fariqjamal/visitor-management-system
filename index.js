@@ -365,12 +365,12 @@ async function run() {
 
   
   
- /**
+  /**
  * @swagger
- * /issueVisitorPass:
+ * /checkIn:
  *   post:
- *     summary: Issue a visitor pass
- *     description: Issue a visitor pass for a visitor without creating a visitor account
+ *     summary: Check-in for a visitor
+ *     description: Perform check-in for a visitor with record ID and purpose
  *     tags:
  *       - Security
  *     security:
@@ -382,10 +382,6 @@ async function run() {
  *           schema:
  *             type: object
  *             properties:
- *                  name:
- *                 type: string
- *               icNumber:
- *                 type: string
  *               recordID:
  *                 oneOf:
  *                   - type: string
@@ -393,23 +389,24 @@ async function run() {
  *               purpose:
  *                 type: string
  *             required:
- *               - name
- *               - icNumber
  *               - recordID
  *               - purpose
  *     responses:
  *       '200':
- *         description:Visitor pass issued successfully
+ *         description: Check-in successful
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
- *      Visitor pass issued successfully
+*       '400':
+ *         description: Invalid request body
+ *       '401':
+ *         description: Unauthorized - Token is missing or invalid
  */
-  app.post('/issueVisitorPass', verifyToken, async (req, res) => {
+  app.post('/checkIn', verifyToken, async (req, res) => {
     let data = req.user;
     let mydata = req.body;
-    res.send(await storeVisitorRecord(client, data, mydata));
+    res.send(await checkIn(client, data, mydata));
   });
 
   
@@ -455,29 +452,22 @@ async function run() {
  *           schema:
  *             type: object
  *             properties:
- *                  name:
+ *               name:
  *                 type: string
  *               icNumber:
  *                 type: string
  *               recordID:
- *                 oneOf:
- *                   - type: string
- *                   - type: integer
- *               purpose:
  *                 type: string
- *             required:
- *               - name
- *               - icNumber
- *               - recordID
- *               - purpose
+ *               purpose:
  *     responses:
  *       '200':
- *         description:Visitor pass issued successfully
+ *         description: Visitor pass issued successfully
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
-*      Visitor pass issued successfully
+ *       '401':
+ *         description: Unauthorized - Token is missing or invalid
  */
  app.post('/issueVisitorPass', verifyToken, async (req, res) => {
    let data = req.user;
@@ -534,6 +524,7 @@ async function storeVisitorRecord(client, data, mydata) {
 
   return `You have checked in at '${currentCheckInTime}' with recordID '${mydata.recordID}'`;
 }
+  
 
 
 
