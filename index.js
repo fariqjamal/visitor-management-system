@@ -438,9 +438,9 @@ async function run() {
   /**
  * @swagger
  * /issueVisitorPass:
- *   post:
- *     summary: Issue a visitor pass
- *     description: Issue a visitor pass for a visitor without creating a visitor account
+*   post:
+ *     summary: Check-in for a visitor
+ *     description: Perform check-in for a visitor with record ID and purpose
  *     tags:
  *       - Security
  *     security:
@@ -452,23 +452,24 @@ async function run() {
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               recordID:
+ *                 oneOf:
+ *                   - type: string
+ *                   - type: integer
+ *               purpose:
  *                 type: string
- *               icNumber:
- *                 type: string
- *               vehicleNumber:
- *                 type: string
- *               phoneNumber:
- *                 type: string
- *               company:
- *                 type: string
+ *             required:
+ *               - recordID
+ *               - purpose
  *     responses:
  *       '200':
- *         description: Visitor pass issued successfully
+ *         description: Check-in successful
  *         content:
  *           text/plain:
  *             schema:
  *               type: string
+*       '400':
+ *         description: Invalid request body
  *       '401':
  *         description: Unauthorized - Token is missing or invalid
  */
